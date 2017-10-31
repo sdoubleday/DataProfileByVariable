@@ -1,0 +1,132 @@
+<Biml xmlns="http://schemas.varigence.com/biml.xsd">
+  <Connections>
+    <AdoNetConnection Name="DatabaseConn" ConnectionString="Data Source=MyServer;Initial Catalog=MyDatabase;Integrated Security=True;" Provider="System.Data.SqlClient.SqlConnection, System.Data, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+    <FileConnection Name="Table.xml" FileUsageType="CreateFile" FilePath="C:\Temp\MyServer__MyDatabase__dbo__Table.xml" />
+  </Connections>
+  <Packages>
+    <Package Name="DataProfileByVariable" Language="None" ProtectionLevel="EncryptSensitiveWithUserKey" CheckpointFileName="" SsisVersionComments="" SsisPackageType="5" VersionMajor="1" VersionBuild="23" CreatorName="SQL2008CTP6\Administrator" CreatorComputerName="SQL2008CTP6" CreationDate="2008-03-10T21:09:21" DisablePackageConfigurations="true">
+      <Variables>
+        <Variable Name="Database" DataType="String" IncludeInDebugDump="Exclude">MyDatabase</Variable>
+        <Variable Name="OutputPath" DataType="String" IncludeInDebugDump="Exclude">C:\Temp\</Variable>
+        <Variable Name="SchemaName" DataType="String" IncludeInDebugDump="Exclude">dbo</Variable>
+        <Variable Name="ServerName" DataType="String" IncludeInDebugDump="Exclude">MyServer</Variable>
+        <Variable Name="TableName" DataType="String" IncludeInDebugDump="Exclude">Table</Variable>
+      </Variables>
+      <Annotations>
+          <Annotation AnnotationType="CodeComment">Thanks are due to John Welch for creating the initial version of this package (http://agilebi.com/jwelch/2008/03/11/using-the-data-profiling-task-to-profile-all-the-tables-in-a-database/) and to Varigence's http://bimlonline.com, which I used to turn my modified version of that package into BIMLScript.
+USAGE (remember to match your version of the IDE (BIDS/SSDT/whatever) to the versions of the SSIS Engine and DTEXEC utility you will be using) :
+    dtexec.exe /F .\DataProfileByVariable.dtsx /Set "\Package.Variables[Database].Value;MyDatabase" /Set "\Package.Variables[OutputPath].Value;C:\Temp\" /Set "\Package.Variables[SchemaName].Value;dbo" /Set "\Package.Variables[ServerName].Value;MyServer" /Set "\Package.Variables[TableName].Value;Table"
+FAIR WARNING: This can be extremely taxing to your server! I advise that you do not run this in a production environment.
+          </Annotation>
+      </Annotations>
+      <Tasks>
+        <DataProfiling Name="Data Profiling Task" DelayValidation="true" OverwriteDestination="true">
+          <Expressions>
+            <Expression ExternalProperty="ProfileInputXml">"&lt;?xml version=\"1.0\" encoding=\"utf-16\"?&gt;
+&lt;DataProfile xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns=\"http://schemas.microsoft.com/sqlserver/2008/DataDebugger/\"&gt;
+  &lt;DataSources /&gt;
+  &lt;DataProfileInput&gt;
+    &lt;ProfileMode&gt;Exact&lt;/ProfileMode&gt;
+    &lt;Timeout&gt;0&lt;/Timeout&gt;
+    &lt;Requests&gt;
+      &lt;ColumnNullRatioProfileRequest ID=\"NullRatioReq\"&gt;
+        &lt;DataSourceID&gt;DatabaseConn&lt;/DataSourceID&gt;
+        &lt;Table Schema=\"" + @[User::SchemaName] + "\" Table=\"" + @[User::TableName] + "\" /&gt;
+        &lt;Column IsWildCard=\"true\" /&gt;
+      &lt;/ColumnNullRatioProfileRequest&gt;
+      &lt;ColumnStatisticsProfileRequest ID=\"StatisticsReq\"&gt;
+        &lt;DataSourceID&gt;DatabaseConn&lt;/DataSourceID&gt;
+        &lt;Table Schema=\"" + @[User::SchemaName] + "\" Table=\"" + @[User::TableName] + "\" /&gt;
+        &lt;Column IsWildCard=\"true\" /&gt;
+      &lt;/ColumnStatisticsProfileRequest&gt;
+      &lt;ColumnLengthDistributionProfileRequest ID=\"LengthDistReq\"&gt;
+        &lt;DataSourceID&gt;DatabaseConn&lt;/DataSourceID&gt;
+        &lt;Table Schema=\"" + @[User::SchemaName] + "\" Table=\"" + @[User::TableName] + "\" /&gt;
+        &lt;Column IsWildCard=\"true\" /&gt;
+        &lt;IgnoreLeadingSpace&gt;false&lt;/IgnoreLeadingSpace&gt;
+        &lt;IgnoreTrailingSpace&gt;true&lt;/IgnoreTrailingSpace&gt;
+      &lt;/ColumnLengthDistributionProfileRequest&gt;
+      &lt;ColumnValueDistributionProfileRequest ID=\"ValueDistReq\"&gt;
+        &lt;DataSourceID&gt;DatabaseConn&lt;/DataSourceID&gt;
+        &lt;Table Schema=\"" + @[User::SchemaName] + "\" Table=\"" + @[User::TableName] + "\" /&gt;
+        &lt;Column IsWildCard=\"true\" /&gt;
+        &lt;Option&gt;FrequentValues&lt;/Option&gt;
+        &lt;FrequentValueThreshold&gt;0.001&lt;/FrequentValueThreshold&gt;
+      &lt;/ColumnValueDistributionProfileRequest&gt;
+      &lt;ColumnPatternProfileRequest ID=\"PatternReq\"&gt;
+        &lt;DataSourceID&gt;DatabaseConn&lt;/DataSourceID&gt;
+        &lt;Table Schema=\"" + @[User::SchemaName] + "\" Table=\"" + @[User::TableName] + "\" /&gt;
+        &lt;Column IsWildCard=\"true\" /&gt;
+        &lt;MaxNumberOfPatterns&gt;10&lt;/MaxNumberOfPatterns&gt;
+        &lt;PercentageDataCoverageDesired&gt;95&lt;/PercentageDataCoverageDesired&gt;
+        &lt;CaseSensitive&gt;false&lt;/CaseSensitive&gt;
+        &lt;Delimiters&gt; \\t\\r\\n&lt;/Delimiters&gt;
+        &lt;Symbols&gt;,.;:-\"'`~=&amp;amp;/\\\\@!?()&amp;lt;&amp;gt;[]{}|#*^%&lt;/Symbols&gt;
+        &lt;TagTableName /&gt;
+      &lt;/ColumnPatternProfileRequest&gt;
+      &lt;CandidateKeyProfileRequest ID=\"KeyReq\"&gt;
+        &lt;DataSourceID&gt;DatabaseConn&lt;/DataSourceID&gt;
+        &lt;Table Schema=\"" + @[User::SchemaName] + "\" Table=\"" + @[User::TableName] + "\" /&gt;
+        &lt;KeyColumns&gt;
+          &lt;Column IsWildCard=\"true\" /&gt;
+        &lt;/KeyColumns&gt;
+        &lt;ThresholdSetting&gt;Specified&lt;/ThresholdSetting&gt;
+        &lt;KeyStrengthThreshold&gt;0.95&lt;/KeyStrengthThreshold&gt;
+        &lt;VerifyOutputInFastMode&gt;false&lt;/VerifyOutputInFastMode&gt;
+        &lt;MaxNumberOfViolations&gt;100&lt;/MaxNumberOfViolations&gt;
+      &lt;/CandidateKeyProfileRequest&gt;
+      &lt;FunctionalDependencyProfileRequest ID=\"FDReq\"&gt;
+        &lt;DataSourceID&gt;DatabaseConn&lt;/DataSourceID&gt;
+        &lt;Table Schema=\"" + @[User::SchemaName] + "\" Table=\"" + @[User::TableName] + "\" /&gt;
+        &lt;DeterminantColumns&gt;
+          &lt;Column IsWildCard=\"true\" /&gt;
+        &lt;/DeterminantColumns&gt;
+        &lt;DependentColumn IsWildCard=\"true\" /&gt;
+        &lt;ThresholdSetting&gt;Specified&lt;/ThresholdSetting&gt;
+        &lt;FDStrengthThreshold&gt;0.95&lt;/FDStrengthThreshold&gt;
+        &lt;VerifyOutputInFastMode&gt;false&lt;/VerifyOutputInFastMode&gt;
+        &lt;MaxNumberOfViolations&gt;100&lt;/MaxNumberOfViolations&gt;
+      &lt;/FunctionalDependencyProfileRequest&gt;
+    &lt;/Requests&gt;
+  &lt;/DataProfileInput&gt;
+  &lt;DataProfileOutput&gt;
+    &lt;Profiles /&gt;
+  &lt;/DataProfileOutput&gt;
+&lt;/DataProfile&gt;"</Expression>
+          </Expressions>
+          <FileOutput ConnectionName="Table.xml" />
+          <ProfileRequests>
+            <ColumnNullRatioProfileRequest Name="NullRatioReq" ConnectionName="DatabaseConn" SchemaId="dbo" TableId="Table" />
+            <ColumnStatisticsProfileRequest Name="StatisticsReq" ConnectionName="DatabaseConn" SchemaId="dbo" TableId="Table" />
+            <ColumnLengthDistributionProfileRequest Name="LengthDistReq" ConnectionName="DatabaseConn" SchemaId="dbo" TableId="Table" />
+            <ColumnValueDistributionProfileRequest Name="ValueDistReq" ConnectionName="DatabaseConn" SchemaId="dbo" TableId="Table" />
+            <ColumnPatternProfileRequest Name="PatternReq" ConnectionName="DatabaseConn" SchemaId="dbo" TableId="Table" />
+            <CandidateKeyProfileRequest Name="KeyReq" ConnectionName="DatabaseConn" SchemaId="dbo" TableId="Table">
+              <KeyColumns>
+                <Column></Column>
+              </KeyColumns>
+            </CandidateKeyProfileRequest>
+            <FunctionalDependencyProfileRequest Name="FDReq" ConnectionName="DatabaseConn" SchemaId="dbo" TableId="Table" DependentColumn="*">
+              <DeterminantColumns>
+                <Column>*</Column>
+              </DeterminantColumns>
+            </FunctionalDependencyProfileRequest>
+          </ProfileRequests>
+        </DataProfiling>
+      </Tasks>
+      <Connections>
+        <Connection ConnectionName="DatabaseConn">
+          <Expressions>
+            <Expression ExternalProperty="InitialCatalog">@[User::Database]</Expression>
+            <Expression ExternalProperty="ServerName">@[User::ServerName]</Expression>
+          </Expressions>
+        </Connection>
+        <Connection ConnectionName="Table.xml">
+          <Expressions>
+            <Expression ExternalProperty="ConnectionString">@[User::OutputPath]  + @[User::ServerName] + "__" + @[User::Database] + "__" + @[User::SchemaName] + "__"  + @[User::TableName] + ".xml"</Expression>
+          </Expressions>
+        </Connection>
+      </Connections>
+    </Package>
+  </Packages>
+</Biml>

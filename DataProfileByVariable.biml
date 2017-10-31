@@ -4,7 +4,7 @@
     <FileConnection Name="Table.xml" FileUsageType="CreateFile" FilePath="C:\Temp\MyServer__MyDatabase__dbo__Table.xml" />
   </Connections>
   <Packages>
-    <Package Name="DataProfileByVariable" Language="None" ProtectionLevel="EncryptSensitiveWithUserKey" CheckpointFileName="" SsisVersionComments="" SsisPackageType="5" VersionMajor="1" VersionBuild="23" CreatorName="SQL2008CTP6\Administrator" CreatorComputerName="SQL2008CTP6" CreationDate="2008-03-10T21:09:21" DisablePackageConfigurations="true">
+    <Package Name="DataProfileByVariable" Language="None" ProtectionLevel="DontSaveSensitive" CheckpointFileName="" SsisVersionComments="" SsisPackageType="5" VersionMajor="1" VersionBuild="23" CreatorName="SQL2008CTP6\Administrator" CreatorComputerName="SQL2008CTP6" CreationDate="2008-03-10T21:09:21" DisablePackageConfigurations="true">
       <Variables>
         <Variable Name="Database" DataType="String" IncludeInDebugDump="Exclude">MyDatabase</Variable>
         <Variable Name="OutputPath" DataType="String" IncludeInDebugDump="Exclude">C:\Temp\</Variable>
@@ -14,6 +14,8 @@
       </Variables>
       <Annotations>
           <Annotation AnnotationType="CodeComment">Thanks are due to John Welch for creating the initial version of this package (http://agilebi.com/jwelch/2008/03/11/using-the-data-profiling-task-to-profile-all-the-tables-in-a-database/) and to Varigence's http://bimlonline.com, which I used to turn my modified version of that package into BIMLScript.
+Modifications:
+	Removed the foreach loop and added variables to allow for easy control through dtexec.
 USAGE (remember to match your version of the IDE (BIDS/SSDT/whatever) to the versions of the SSIS Engine and DTEXEC utility you will be using) :
     dtexec.exe /F .\DataProfileByVariable.dtsx /Set "\Package.Variables[Database].Value;MyDatabase" /Set "\Package.Variables[OutputPath].Value;C:\Temp\" /Set "\Package.Variables[SchemaName].Value;dbo" /Set "\Package.Variables[ServerName].Value;MyServer" /Set "\Package.Variables[TableName].Value;Table"
 FAIR WARNING: This can be extremely taxing to your server! I advise that you do not run this in a production environment.
